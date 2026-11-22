@@ -4,10 +4,10 @@
 # server. It replaces the browser frontend: std/httpclient does the fetching,
 # and immediate-mode UI replaces Alpine.js.
 #
-# Build & run from the project root:
-#   nim c -r src/rememe_duo_client.nim
+# Build & run from the project root (with SSL for the remote https:// preset):
+#   nim c -d:ssl -r src/rememe_duo_client.nim
 # Options:
-#   --server=http://host:8000/   API base URL (default http://127.0.0.1:8000/)
+#   --server=local|remote|URL    API server (default local http://127.0.0.1:8000/)
 #   --smoke                      render one frame, then exit
 
 import std/os
@@ -47,6 +47,10 @@ proc handleKey(k: Key) =
     of focusName: enterName()
     of focusJoin: joinGame(joinCode)
     of focusChat: sendChat()
+  of keyLeft:
+    if view == viewName: cycleServer(-1)
+  of keyRight:
+    if view == viewName: cycleServer(1)
   of keyEscape:
     if view == viewGame: backToLobby()
   else:
@@ -57,6 +61,10 @@ proc handleTap(x, y: float) =
   of viewName:
     if hitRect(x, y, fieldName.x, fieldName.y, fieldName.w, fieldName.h):
       focus = focusName
+    elif hitRect(x, y, btnServerPrev.x, btnServerPrev.y, btnServerPrev.w, btnServerPrev.h):
+      cycleServer(-1)
+    elif hitRect(x, y, btnServerNext.x, btnServerNext.y, btnServerNext.w, btnServerNext.h):
+      cycleServer(1)
     elif hitRect(x, y, btnEnter.x, btnEnter.y, btnEnter.w, btnEnter.h):
       enterName()
   of viewLobby:

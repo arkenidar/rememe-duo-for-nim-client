@@ -17,9 +17,55 @@ type
   View* = enum
     viewName, viewLobby, viewGame
 
-# --- configuration -----------------------------------------------------------
+# --- server selection --------------------------------------------------------
 
-var baseUrl* = "http://127.0.0.1:8000/"
+type
+  ServerPreset* = object
+    label*: string
+    url*: string          # server root, always ends with "/"
+
+var serverPresets* = [
+  ServerPreset(label: "local",  url: "http://127.0.0.1:8000/"),
+  ServerPreset(label: "remote", url: "https://github.arkenidar.com/rememe-duo/"),
+]
+var serverIndex* = 0
+var serverRoot* = serverPresets[0].url
+
+proc apiEndpoint*(): string =
+  ## The full ".../api.php" URL the client talks to.
+  serverRoot & "api.php"
+
+proc serverLabel*(): string =
+  if serverIndex >= 0 and serverIndex < serverPresets.len:
+    serverPresets[serverIndex].label
+  else:
+    "custom"
+
+proc setServer*(url: string) =
+  ## Normalize a server address into a root (trailing "/"), accepting both a
+  ## root ".../rememe-duo/" and a full ".../rememe-duo/api.php" URL.
+  var u = url.strip()
+  if u.len == 0: return
+  while u.endsWith("/"): u.setLen(u.len - 1)
+  if u.endsWith("/api.php"): u = u[0 ..< u.len - "/api.php".len]
+  if u.len == 0: return
+  serverRoot = u & "/"
+  serverIndex = -1
+  for i, p in serverPresets:
+    if p.url == serverRoot:
+      serverIndex = i
+      break
+
+proc cycleServer*(dir: int) =
+  ## Step to the previous/next preset (wraps around). Leaving a custom URL,
+  ## "<" goes to the last preset and ">" to the first.
+  let n = serverPresets.len
+  if n == 0: return
+  if serverIndex < 0:
+    serverIndex = if dir < 0: n - 1 else: 0
+  else:
+    serverIndex = ((serverIndex + dir) mod n + n) mod n
+  serverRoot = serverPresets[serverIndex].url
 
 # --- the state mirror (script.js's `state` + local UI fields) ----------------
 
@@ -126,7 +172,7 @@ proc isDisabled*(i: int): bool =
 
 proc apiCall*(action: string; params: seq[(string, string)] = @[]): JsonNode =
   ## GET api.php?action=...&... and return the parsed JSON envelope.
-  var url = baseUrl & "api.php?action=" & encodeUrl(action)
+  var url = apiEndpoint() & "?action=" & encodeUrl(action)
   for (k, v) in params:
     url.add("&" & encodeUrl(k) & "=" & encodeUrl(v))
   let client = newHttpClient(timeout = 5000)
@@ -230,5 +276,13 @@ proc parseArgs*() =
   for i in 1 .. paramCount():
     let a = paramStr(i)
     if a.startsWith("--server="):
-      baseUrl = a[9 .. ^1]
-      if not baseUrl.endsWith("/"): baseUrl.add("/")
+      let v = a[9 .. ^1]
+      var matched = false
+      for idx, p in serverPresets:
+        if v == p.label:
+          serverIndex = idx
+          serverRoot = p.url
+          matched = true
+          break
+      if not matched:
+        setServer(v)

@@ -80,6 +80,7 @@ var
   chatScroll* = 0.0
 
   btnEnter*, btnNewGame*, btnJoin*, btnBack*, btnSend*: Rect
+  btnServerPrev*, btnServerNext*: Rect
   fieldName*, fieldJoin*, fieldChat*: Rect
   chatViewport*: Rect
   cardRects*: seq[Rect]
@@ -316,6 +317,13 @@ proc renderName(ren: Renderer) =
   drawTextCentered(ren, "Rememe Duo", 120.0, 36.0, cTitle)
   drawTextWrapped(ren, 60.0, 190.0, LOGICAL_W - 120.0,
     "Two screens, one memory duel. Pick a name to enter the lobby.", cMuted, 16.0)
+
+  drawButton(ren, btnServerPrev, "<", 18.0)
+  drawButton(ren, btnServerNext, ">", 18.0)
+  drawTextIn(ren, "[" & serverLabel() & "] " & apiEndpoint(),
+             Rect(x: 0.0, y: 252.0, w: LOGICAL_W, h: 36.0), 14.0, cTitle,
+             centered = true)
+
   drawField(ren, fieldName, name, "your name", 18.0, focus == focusName)
   drawButton(ren, btnEnter, "enter lobby", 18.0)
 
@@ -374,8 +382,10 @@ proc frame*(ren: Renderer) =
 proc relayout*() =
   case view
   of viewName:
-    fieldName = Rect(x: 40.0, y: 300.0, w: 400.0, h: 48.0)
-    btnEnter = Rect(x: 140.0, y: 380.0, w: 200.0, h: 48.0)
+    btnServerPrev = Rect(x: 90.0, y: 252.0, w: 44.0, h: 36.0)
+    btnServerNext = Rect(x: 346.0, y: 252.0, w: 44.0, h: 36.0)
+    fieldName = Rect(x: 40.0, y: 320.0, w: 400.0, h: 48.0)
+    btnEnter = Rect(x: 140.0, y: 400.0, w: 200.0, h: 48.0)
   of viewLobby:
     fieldChat = Rect(x: MARGIN, y: 560.0, w: LOGICAL_W - 2.0 * MARGIN - 90.0, h: 44.0)
     btnSend = Rect(x: fieldChat.x + fieldChat.w + 8.0, y: 560.0, w: 82.0, h: 44.0)

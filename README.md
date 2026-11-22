@@ -27,13 +27,29 @@ cd ../rememe-duo
 php -S 0.0.0.0:8000
 
 # 2. start the client (in rememe-duo-for-nim-client/)
-nim c -r src/rememe_duo_client.nim
+nim c -d:ssl -r src/rememe_duo_client.nim
 ```
 
-The client defaults to `http://127.0.0.1:8000/`. Point it elsewhere with:
+`-d:ssl` links OpenSSL so the remote `https://` preset works (local `http://`
+works either way).
+
+## Choosing the server
+
+On the **name screen**, use the `<` / `>` buttons (or the **Left/Right** arrow
+keys) to cycle between presets, shown as `[label] URL`:
+
+| Preset | Endpoint |
+|---|---|
+| `local`  | `http://127.0.0.1:8000/api.php` |
+| `remote` | `https://github.arkenidar.com/rememe-duo/api.php` |
+
+You can also pass any URL on the command line — a root or a full `api.php` URL
+both work, and `--server=local` / `--server=remote` select a preset by name:
 
 ```sh
-nim c -r src/rememe_duo_client.nim -- --server=http://192.168.1.20:8000/
+nim c -d:ssl -r src/rememe_duo_client.nim -- --server=remote
+nim c -d:ssl -r src/rememe_duo_client.nim -- --server=http://192.168.1.20:8000/
+nim c -d:ssl -r src/rememe_duo_client.nim -- --server=https://github.arkenidar.com/rememe-duo/api.php
 ```
 
 (`--` passes the flag through to the built program.)
@@ -47,6 +63,7 @@ nim c -r src/rememe_duo_client.nim -- --server=http://192.168.1.20:8000/
 | Click/tap a card | mouse left click or touch |
 | Back to lobby (in game) | `Esc` or the `lobby` button |
 | Scroll chat | mouse wheel |
+| Cycle server (name screen) | `<` / `>` buttons or `Left` / `Right` arrows |
 | Quit | close the window (✕) |
 
 ## Project layout
